@@ -97,5 +97,53 @@ services:
     networks:
       - confluent
 
+  webserver:
+    image: apache/airflow:2.6.1-python3.9
+    command: webserver
+    entrypoint: ['/opt/airflow/script/entrypoint.sh']
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW_GID: 50000
+      AIRFLOW_UID: 50000
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./script:/opt/airflow/script
+      # - ./requirements.txt:/opt/airflow/requirements.txt
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - confluent
+
+  scheduler:
+    image: apache/airflow:2.6.1-python3.9
+    depends_on:
+      webserver:
+        condition: service_healthy
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./script:/opt/airflow/script
+      # - ./requirements.txt:/opt/airflow/requirements.txt
+    command: bash "airflow scheduler"
+    networks:
+      - confluent
+
+  postgres:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    networks:
+      - confluent
 networks:
   confluent:
