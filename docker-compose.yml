@@ -115,7 +115,7 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./script:/opt/airflow/script
-      # - ./requirements.txt:/opt/airflow/requirements.txt
+      - ./requirements.txt:/opt/airflow/requirements.txt
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 10s
@@ -132,8 +132,8 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./script:/opt/airflow/script
-      # - ./requirements.txt:/opt/airflow/requirements.txt
-    command: bash "airflow scheduler"
+      - ./requirements.txt:/opt/airflow/requirements.txt
+    command: bash -c "airflow scheduler"
     networks:
       - confluent
 
